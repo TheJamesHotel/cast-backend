@@ -8,6 +8,7 @@ import "./db/database.js";
 import tvRoutes from "./routes/tvRoutes.js";
 import pairRoutes from "./routes/pairRoutes.js";
 import webRoutes from "./routes/webRoutes.js";
+import displayRoutes from "./routes/displayRoutes.js";
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.get("/health", (req, res) => {
 app.use("/api/tv", tvRoutes);
 app.use("/api/pair", pairRoutes);
 app.use("/", webRoutes);
+app.use("/", displayRoutes);
 
 const PORT = process.env.PORT || 3000;
 
