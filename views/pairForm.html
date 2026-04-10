@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connect to TV</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #1c1c1c;
+      padding: 32px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: 26px;
+    }
+    p {
+      color: #ccc;
+    }
+    label {
+      display: block;
+      margin-top: 16px;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid #444;
+      background: #222;
+      color: white;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      background: #b1926c;
+      color: black;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .room {
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #b1926c;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="room">Room: __ROOM_ID__</div>
+    <h1>Connect to this TV</h1>
+    <p>Enter the 6-digit code shown on the TV screen.</p>
+
+    <form method="POST" action="/pair">
+      <input type="hidden" name="roomId" value="__ROOM_ID__" />
+
+      <label for="pairCode">6-digit code</label>
+      <input
+        id="pairCode"
+        name="pairCode"
+        type="text"
+        inputmode="numeric"
+        maxlength="6"
+        placeholder="Enter code"
+        required
+      />
+
+      <label for="guestLabel">Device name (optional)</label>
+      <input
+        id="guestLabel"
+        name="guestLabel"
+        type="text"
+        placeholder="iPhone van gast"
+      />
+
+      <button type="submit">Connect</button>
+    </form>
+  </div>
+</body>
+</html>
