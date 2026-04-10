@@ -1,109 +1,157 @@
 import express from "express";
-import fs from "fs";
-import path from "path";
-import db from "../db/database.js";
-import { cleanupExpiredRecords } from "../services/cleanupService.js";
-import { generateSessionToken } from "../services/codeService.js";
+import { activateTvSession, getDisplayUrl, getTv } from "../lib/castStore.js";
 
 const router = express.Router();
 
-function loadView(filename) {
-  const filePath = path.join(process.cwd(), "views", filename);
-  return fs.readFileSync(filePath, "utf8");
-}
+/**
+ * GET /pair/:deviceId
+ */
+router.get("/pair/:deviceId", (req, res) => {
+  const { deviceId } = req.params;
+  const tv = getTv(deviceId);
 
-router.get("/pair", (req, res) => {
-  cleanupExpiredRecords();
+  if (!tv) {
+    return res.status(404).send(`
+      <html>
+        <body style="font-family:Arial;padding:40px;background:#111;color:#fff;">
+          <h1>TV niet gevonden</h1>
+        </body>
+      </html>
+    `);
+  }
 
-  const roomId = req.query.room || "";
+  res.send(`
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Pair with TV</title>
+        <style>
+          body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+          }
+          .card {
+            width: 100%;
+            max-width: 520px;
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 32px;
+            box-sizing: border-box;
+            text-align: center;
+          }
+          h1 { margin-top: 0; }
+          .muted { color: #b0b0b0; }
+          .code {
+            font-size: 42px;
+            letter-spacing: 8px;
+            color: #e7c45a;
+            font-weight: bold;
+            margin: 20px 0;
+          }
+          button {
+            background: #e7c45a;
+            color: black;
+            border: 0;
+            border-radius: 12px;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+          }
+          input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #333;
+            background: #101010;
+            color: white;
+            margin-top: 14px;
+            margin-bottom: 16px;
+            box-sizing: border-box;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>Koppel met ${tv.tvName}</h1>
+          <p class="muted">Kamer ${tv.roomId}</p>
+          <div class="code">${tv.pairingCode}</div>
+          <p class="muted">Bevestig hieronder om deze TV te koppelen.</p>
 
-  let html = loadView("pairForm.html");
-  html = html.replaceAll("__ROOM_ID__", roomId);
-
-  res.send(html);
+          <form method="POST" action="/pair/${encodeURIComponent(deviceId)}/confirm">
+            <input
+              type="text"
+              name="guestName"
+              placeholder="Naam gast (optioneel)"
+            />
+            <button type="submit">Koppelen</button>
+          </form>
+        </div>
+      </body>
+    </html>
+  `);
 });
 
-router.post("/pair", (req, res) => {
-  cleanupExpiredRecords();
+/**
+ * POST /pair/:deviceId/confirm
+ */
+router.post("/pair/:deviceId/confirm", (req, res) => {
+  const { deviceId } = req.params;
+  const tv = getTv(deviceId);
 
-  const { roomId, pairCode, guestLabel } = req.body;
-
-  if (!roomId || !pairCode || !/^\d{6}$/.test(pairCode)) {
-    let html = loadView("pairError.html");
-    html = html.replace("__ERROR_MESSAGE__", "The code is invalid. Please check the TV screen and try again.");
-    html = html.replace("__RETRY_URL__", `/pair?room=${encodeURIComponent(roomId || "")}`);
-    return res.status(400).send(html);
+  if (!tv) {
+    return res.status(404).send("TV niet gevonden");
   }
 
-  const code = db.prepare(`
-    SELECT * FROM pair_codes
-    WHERE room_id = ? AND pair_code = ? AND status = 'active'
-    ORDER BY created_at DESC
-    LIMIT 1
-  `).get(roomId, pairCode);
+  const guestName =
+    typeof req.body?.guestName === "string" ? req.body.guestName.trim() : "";
 
-  if (!code) {
-    let html = loadView("pairError.html");
-    html = html.replace("__ERROR_MESSAGE__", "This code is incorrect or has expired.");
-    html = html.replace("__RETRY_URL__", `/pair?room=${encodeURIComponent(roomId)}`);
-    return res.status(400).send(html);
-  }
+  activateTvSession(tv, guestName || "Gast");
 
-  const existingSession = db.prepare(`
-    SELECT * FROM sessions
-    WHERE device_id = ? AND status = 'active'
-    LIMIT 1
-  `).get(code.device_id);
-
-  if (existingSession) {
-    let html = loadView("pairError.html");
-    html = html.replace("__ERROR_MESSAGE__", "This TV already has an active connection.");
-    html = html.replace("__RETRY_URL__", `/pair?room=${encodeURIComponent(roomId)}`);
-    return res.status(409).send(html);
-  }
-
-  const now = new Date();
-  const validUntil = new Date(now.getTime() + 12 * 60 * 60 * 1000).toISOString();
-  const sessionToken = generateSessionToken();
-
-  db.prepare(`
-    INSERT INTO sessions (
-      session_token, device_id, room_id, guest_label,
-      ip_address, user_agent, status, valid_until, created_at, updated_at
-    )
-    VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)
-  `).run(
-    sessionToken,
-    code.device_id,
-    roomId,
-    guestLabel || "Guest device",
-    req.ip || null,
-    req.get("user-agent") || null,
-    validUntil,
-    now.toISOString(),
-    now.toISOString()
-  );
-
-  db.prepare(`
-    UPDATE pair_codes
-    SET status = 'used', used_at = ?
-    WHERE id = ?
-  `).run(now.toISOString(), code.id);
-
-  db.prepare(`
-    UPDATE tvs
-    SET status = 'paired', updated_at = ?
-    WHERE device_id = ?
-  `).run(now.toISOString(), code.device_id);
-
-  const tv = db.prepare(`
-    SELECT * FROM tvs WHERE device_id = ?
-  `).get(code.device_id);
-
-  let html = loadView("pairSuccess.html");
-  html = html.replace("__CAST_TARGET__", tv.display_name);
-
-  res.send(html);
+  return res.send(`
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <style>
+          body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+          }
+          .card {
+            width: 100%;
+            max-width: 520px;
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 32px;
+            box-sizing: border-box;
+            text-align: center;
+          }
+          a {
+            color: #e7c45a;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <h1>TV gekoppeld</h1>
+          <p>${tv.tvName} is nu verbonden.</p>
+          <p><a href="/display?deviceId=${encodeURIComponent(tv.deviceId)}">Open TV display</a></p>
+        </div>
+      </body>
+    </html>
+  `);
 });
 
 export default router;
