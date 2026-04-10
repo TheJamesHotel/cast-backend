@@ -5,6 +5,8 @@ import express from "express";
 import cors from "cors";
 import "./db/database.js";
 
+import tvRoutes from "./routes/tvRoutes.js";
+
 const app = express();
 
 app.use(cors());
@@ -23,6 +25,8 @@ app.get("/", (req, res) => {
 app.get("/health", (req, res) => {
   res.json({ ok: true });
 });
+
+app.use("/api/tv", tvRoutes);
 
 const PORT = process.env.PORT || 3000;
 
