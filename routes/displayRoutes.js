@@ -1,21 +1,21 @@
 import express from "express";
-import { getTv } from "../lib/castStore.js";
+import { getTvByPairingCode } from "../lib/castStore.js";
 
 const router = express.Router();
 
 /**
- * GET /display?deviceId=...
+ * GET /display?code=...
  */
-router.get("/display", (req, res) => {
-  const { deviceId } = req.query;
-  const tv = getTv(deviceId);
+router.get("/", (req, res) => {
+  const { code } = req.query;
+  const tv = getTvByPairingCode(code);
 
   if (!tv) {
     return res.status(404).send(`
       <html>
         <body style="margin:0;background:#000;color:#fff;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;">
           <div style="text-align:center;">
-            <h1>Unknown TV</h1>
+            <h1>Ongeldige of verlopen code</h1>
           </div>
         </body>
       </html>
