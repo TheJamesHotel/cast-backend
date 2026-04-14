@@ -1,24 +1,38 @@
 import express from "express";
 import { activateTvSession, getDisplayUrl, getTv } from "../lib/castStore.js";
 
+import {
+  activateTvSession,
+  getDeviceIdByPairingCode,
+  getTv
+} from "../lib/castStore.js";
+
 const router = express.Router();
 
 /**
  * GET /pair/:deviceId
  */
-router.get("/pair/:deviceId", (req, res) => {
-  const { deviceId } = req.params;
-  const tv = getTv(deviceId);
+/**
+ * GET /pair?code=...
+ */
+router.get("/pair", (req, res) => {
+  const { code } = req.query;
+  const deviceId = getDeviceIdByPairingCode(code);
 
-  if (!tv) {
+  if (!deviceId) {
     return res.status(404).send(`
       <html>
         <body style="font-family:Arial;padding:40px;background:#111;color:#fff;">
-          <h1>TV niet gevonden</h1>
+          <h1>Ongeldige code</h1>
+          <p>Deze koppelcode bestaat niet of is verlopen.</p>
         </body>
       </html>
     `);
   }
+
+  return res.redirect(`/pair/${encodeURIComponent(deviceId)}`);
+});
+
 
   res.send(`
     <html>

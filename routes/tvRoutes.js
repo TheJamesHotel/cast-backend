@@ -59,7 +59,7 @@ router.get("/:deviceId", (req, res) => {
     tvName: tv.tvName,
     pairingCode: tv.pairingCode,
     pairingUrl: tv.pairingUrl,
-    displayUrl: getDisplayUrl(baseUrl, tv.deviceId),
+    displayUrl: getDisplayUrl(baseUrl, tv.pairingCode),
     status: tv.activeSession ? "active" : "waiting",
     activeSession: tv.activeSession,
     updatedAt: tv.updatedAt

@@ -43,7 +43,7 @@ router.post("/by-code", (req, res) => {
       deviceId: tv.deviceId,
       tvName: tv.tvName,
       roomId: tv.roomId,
-      displayUrl: getDisplayUrl(baseUrl, tv.deviceId)
+      displayUrl: getDisplayUrl(baseUrl, tv.pairingCode)
     });
   } catch (error) {
     console.error("Pair by code error:", error);

@@ -32,7 +32,7 @@ app.get("/health", (req, res) => {
 app.use("/api/tv", tvRoutes);
 app.use("/api/pair", pairRoutes);
 app.use("/", webRoutes);
-app.use("/", displayRoutes);
+app.use("/display", displayRoutes);
 
 const PORT = process.env.PORT || 3000;
 
