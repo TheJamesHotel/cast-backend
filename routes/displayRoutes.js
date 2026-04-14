@@ -13,9 +13,35 @@ router.get("/", (req, res) => {
   if (!tv) {
     return res.status(404).send(`
       <html>
-        <body style="margin:0;background:#000;color:#fff;font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;">
-          <div style="text-align:center;">
-            <h1>Ongeldige of verlopen code</h1>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <title>TV koppelen</title>
+          <style>
+            body {
+              margin: 0;
+              background: #000;
+              color: #fff;
+              font-family: Arial, sans-serif;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+            }
+            .card {
+              text-align: center;
+              background: #111;
+              padding: 40px;
+              border-radius: 24px;
+              max-width: 520px;
+            }
+            h1 { margin-top: 0; }
+            .muted { color: #aaa; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <h1>Ongeldige code</h1>
+            <p class="muted">Deze koppelcode bestaat niet of is verlopen.</p>
           </div>
         </body>
       </html>
