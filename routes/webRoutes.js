@@ -172,7 +172,7 @@ router.post("/pair/:deviceId/confirm", (req, res) => {
         <div class="card">
           <h1>TV gekoppeld</h1>
           <p>${tv.tvName} is nu verbonden.</p>
-          <p><a href="/display?deviceId=${encodeURIComponent(tv.deviceId)}">Open TV display</a></p>
+          <p><a href="/display?code=${encodeURIComponent(tv.pairingCode)}">Open TV display</a></p>
         </div>
       </body>
     </html>
