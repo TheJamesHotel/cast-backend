@@ -1,6 +1,4 @@
 import express from "express";
-import { activateTvSession, getDisplayUrl, getTv } from "../lib/castStore.js";
-
 import {
   activateTvSession,
   getDeviceIdByPairingCode,
@@ -9,9 +7,6 @@ import {
 
 const router = express.Router();
 
-/**
- * GET /pair/:deviceId
- */
 /**
  * GET /pair?code=...
  */
@@ -33,6 +28,22 @@ router.get("/pair", (req, res) => {
   return res.redirect(`/pair/${encodeURIComponent(deviceId)}`);
 });
 
+/**
+ * GET /pair/:deviceId
+ */
+router.get("/pair/:deviceId", (req, res) => {
+  const { deviceId } = req.params;
+  const tv = getTv(deviceId);
+
+  if (!tv) {
+    return res.status(404).send(`
+      <html>
+        <body style="font-family:Arial;padding:40px;background:#111;color:#fff;">
+          <h1>TV niet gevonden</h1>
+        </body>
+      </html>
+    `);
+  }
 
   res.send(`
     <html>
