@@ -8,6 +8,8 @@ import {
   getBaseUrl,
   getDisplayUrl,
   getTv,
+  listCommands,
+  listTvs,
   queueDeviceCommand
 } from "../lib/castStore.js";
 
@@ -158,6 +160,17 @@ router.post("/command/:commandId/ack", (req, res) => {
   }
 
   return res.json({ ok: true, command });
+});
+
+/**
+ * GET /api/tv/debug/state
+ */
+router.get("/debug/state", (req, res) => {
+  return res.json({
+    ok: true,
+    tvs: listTvs(),
+    commands: listCommands()
+  });
 });
 
 export default router;
