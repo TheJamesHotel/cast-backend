@@ -1,11 +1,14 @@
 import express from "express";
 import {
+  acknowledgeCommand,
   buildRegisterResponse,
   disconnectTv,
   ensureTv,
+  getNextPendingCommand,
   getBaseUrl,
   getDisplayUrl,
-  getTv
+  getTv,
+  queueDeviceCommand
 } from "../lib/castStore.js";
 
 const router = express.Router();
@@ -84,6 +87,61 @@ router.post("/:deviceId/disconnect", (req, res) => {
     ok: true,
     ...buildRegisterResponse(baseUrl, tv)
   });
+});
+
+/**
+ * POST /api/tv/command
+ */
+router.post("/command", (req, res) => {
+  try {
+    const { action, deviceId = null, roomId = null, source = "dashboard", note = null } = req.body || {};
+
+    if (!action) {
+      return res.status(400).json({ error: "action is required" });
+    }
+
+    if (!deviceId && !roomId) {
+      return res.status(400).json({ error: "deviceId or roomId is required" });
+    }
+
+    const command = queueDeviceCommand({ action, deviceId, roomId, source, note });
+    return res.status(201).json({ ok: true, command });
+  } catch (error) {
+    console.error("Queue command error:", error);
+    return res.status(500).json({ error: "internal_error" });
+  }
+});
+
+/**
+ * GET /api/tv/command?deviceId=...&roomId=...
+ */
+router.get("/command", (req, res) => {
+  const { deviceId = null, roomId = null } = req.query || {};
+
+  if (!deviceId && !roomId) {
+    return res.status(400).json({ error: "deviceId or roomId is required" });
+  }
+
+  const command = getNextPendingCommand({ deviceId, roomId });
+
+  return res.json({
+    ok: true,
+    command: command || null,
+  });
+});
+
+/**
+ * POST /api/tv/command/:commandId/ack
+ */
+router.post("/command/:commandId/ack", (req, res) => {
+  const { commandId } = req.params;
+  const command = acknowledgeCommand(commandId);
+
+  if (!command) {
+    return res.status(404).json({ error: "command_not_found" });
+  }
+
+  return res.json({ ok: true, command });
 });
 
 export default router;
