@@ -34,3 +34,16 @@ CREATE TABLE IF NOT EXISTS sessions (
   updated_at TEXT NOT NULL,
   disconnected_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS tv_commands (
+  id TEXT PRIMARY KEY,
+  action TEXT NOT NULL,
+  device_id TEXT,
+  room_id TEXT,
+  source TEXT NOT NULL DEFAULT 'dashboard',
+  note TEXT,
+  created_at TEXT NOT NULL,
+  available_at TEXT NOT NULL,
+  delivered_at TEXT,
+  acknowledged_at TEXT
+);
