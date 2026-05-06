@@ -94,7 +94,15 @@ router.post("/:deviceId/disconnect", (req, res) => {
  */
 router.post("/command", (req, res) => {
   try {
-    const { action, deviceId = null, roomId = null, source = "dashboard", note = null } = req.body || {};
+    const {
+      action,
+      deviceId = null,
+      roomId = null,
+      source = "dashboard",
+      note = null,
+      availableAt = null,
+      delayMs = null
+    } = req.body || {};
 
     if (!action) {
       return res.status(400).json({ error: "action is required" });
@@ -104,7 +112,15 @@ router.post("/command", (req, res) => {
       return res.status(400).json({ error: "deviceId or roomId is required" });
     }
 
-    const command = queueDeviceCommand({ action, deviceId, roomId, source, note });
+    const command = queueDeviceCommand({
+      action,
+      deviceId,
+      roomId,
+      source,
+      note,
+      availableAt,
+      delayMs
+    });
     return res.status(201).json({ ok: true, command });
   } catch (error) {
     console.error("Queue command error:", error);
