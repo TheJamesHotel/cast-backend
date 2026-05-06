@@ -45,53 +45,6 @@ router.post("/register", (req, res) => {
 });
 
 /**
- * GET /api/tv/:deviceId
- */
-router.get("/:deviceId", (req, res) => {
-  const { deviceId } = req.params;
-  const tv = getTv(deviceId);
-
-  if (!tv) {
-    return res.status(404).json({ error: "tv_not_found" });
-  }
-
-  const baseUrl = getBaseUrl(req);
-
-  return res.json({
-    deviceId: tv.deviceId,
-    roomId: tv.roomId,
-    displayName: tv.displayName,
-    tvName: tv.tvName,
-    pairingCode: tv.pairingCode,
-    pairingUrl: tv.pairingUrl,
-    displayUrl: getDisplayUrl(baseUrl, tv.pairingCode),
-    status: tv.activeSession ? "active" : "waiting",
-    activeSession: tv.activeSession,
-    updatedAt: tv.updatedAt
-  });
-});
-
-/**
- * POST /api/tv/:deviceId/disconnect
- */
-router.post("/:deviceId/disconnect", (req, res) => {
-  const { deviceId } = req.params;
-  const tv = getTv(deviceId);
-
-  if (!tv) {
-    return res.status(404).json({ error: "tv_not_found" });
-  }
-
-  const baseUrl = getBaseUrl(req);
-  disconnectTv(tv);
-
-  return res.json({
-    ok: true,
-    ...buildRegisterResponse(baseUrl, tv)
-  });
-});
-
-/**
  * POST /api/tv/command
  */
 router.post("/command", (req, res) => {
@@ -170,6 +123,53 @@ router.get("/debug/state", (req, res) => {
     ok: true,
     tvs: listTvs(),
     commands: listCommands()
+  });
+});
+
+/**
+ * GET /api/tv/:deviceId
+ */
+router.get("/:deviceId", (req, res) => {
+  const { deviceId } = req.params;
+  const tv = getTv(deviceId);
+
+  if (!tv) {
+    return res.status(404).json({ error: "tv_not_found" });
+  }
+
+  const baseUrl = getBaseUrl(req);
+
+  return res.json({
+    deviceId: tv.deviceId,
+    roomId: tv.roomId,
+    displayName: tv.displayName,
+    tvName: tv.tvName,
+    pairingCode: tv.pairingCode,
+    pairingUrl: tv.pairingUrl,
+    displayUrl: getDisplayUrl(baseUrl, tv.pairingCode),
+    status: tv.activeSession ? "active" : "waiting",
+    activeSession: tv.activeSession,
+    updatedAt: tv.updatedAt
+  });
+});
+
+/**
+ * POST /api/tv/:deviceId/disconnect
+ */
+router.post("/:deviceId/disconnect", (req, res) => {
+  const { deviceId } = req.params;
+  const tv = getTv(deviceId);
+
+  if (!tv) {
+    return res.status(404).json({ error: "tv_not_found" });
+  }
+
+  const baseUrl = getBaseUrl(req);
+  disconnectTv(tv);
+
+  return res.json({
+    ok: true,
+    ...buildRegisterResponse(baseUrl, tv)
   });
 });
 
